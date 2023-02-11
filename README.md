@@ -5,3 +5,11 @@ This is simple game engine I will be creating following this tutorial https://ww
 I will use this project as basis for my college assigment for the next semester in FER University.
 
 Game engine will 3D engine written in using C++ and Vulkan.
+
+## Build
+
+To build and start Rocket engine you will need to install three dependencies
+1. Vulkan SDK
+2. GLFW
+3. GLM
+More information about installation of above mentioned dependenices can be found [here](https://vulkan-tutorial.com/Development_environmen)
