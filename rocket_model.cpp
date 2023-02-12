@@ -61,11 +61,16 @@ namespace rocket {
 
 	std::vector<VkVertexInputAttributeDescription> RocketModel::Vertex::getAttributeDescriptions()
 	{
-		std::vector<VkVertexInputAttributeDescription> vertexAttributeDescirptions(1);
+		std::vector<VkVertexInputAttributeDescription> vertexAttributeDescirptions(2);
 		vertexAttributeDescirptions[0].location = 0;
 		vertexAttributeDescirptions[0].format = VK_FORMAT_R32G32_SFLOAT; // vec2 in shader
-		vertexAttributeDescirptions[0].offset = 0;
+		vertexAttributeDescirptions[0].offset = offsetof(Vertex, position);
 		vertexAttributeDescirptions[0].binding = 0;
+		
+		vertexAttributeDescirptions[1].location = 1;
+		vertexAttributeDescirptions[1].format = VK_FORMAT_R32G32B32_SFLOAT; // vec3 in shader
+		vertexAttributeDescirptions[1].offset = offsetof(Vertex, color);
+		vertexAttributeDescirptions[1].binding = 0;
 
 		return vertexAttributeDescirptions;
 	}
