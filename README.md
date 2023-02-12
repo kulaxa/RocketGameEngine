@@ -9,7 +9,8 @@ Game engine will 3D engine written in using C++ and Vulkan.
 ## Build
 
 To build and start Rocket engine you will need to install three dependencies
-1. Vulkan SDK
-2. GLFW
-3. GLM
-More information about installation of above mentioned dependenices can be found [here](https://vulkan-tutorial.com/Development_environmen)
+1. `Vulkan SDK`
+2. `GLFW`
+3. `GLM`
+
+More information about installation of above mentioned dependenices can be found [here](https://vulkan-tutorial.com/Development_environmen).

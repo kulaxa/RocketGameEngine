@@ -136,6 +136,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="rocket_device.cpp" />
+    <ClCompile Include="rocket_pipeline.cpp" />
+    <ClCompile Include="rocket_window.cpp" />
+    <ClCompile Include="tutorial_app.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="rocket_device.hpp" />
+    <ClInclude Include="rocket_pipeline.hpp" />
+    <ClInclude Include="rocket_window.hpp" />
+    <ClInclude Include="tutorial_app.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
