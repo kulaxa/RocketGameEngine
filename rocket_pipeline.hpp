@@ -7,14 +7,13 @@ namespace rocket {
 	struct PipelineConfigInfo {
 		VkViewport viewport;
 		VkRect2D scissor;
-		VkPipelineViewportStateCreateInfo viewportInfo;
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo;
 		VkPipelineRasterizationStateCreateInfo rasterizationInfo;
 		VkPipelineMultisampleStateCreateInfo multisampleInfo;
 		VkPipelineColorBlendAttachmentState colorBlendAttachment;
 		VkPipelineColorBlendStateCreateInfo colorBlendInfo;
 		VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
-		VkPipelineLayout pipelineLayout = nullptr;
+		VkPipelineLayout pipelineLayout = nullptr;	
 		VkRenderPass renderPass = nullptr;
 		uint32_t subpass = 0;
 	};
@@ -28,6 +27,7 @@ namespace rocket {
 		RocketPipeline(const RocketPipeline&) = delete;
 		void operator=(const RocketPipeline&) = delete;
 
+		void bind(VkCommandBuffer commandBuffer);
 		static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
 	private:
 		static std::vector<char> readFile(const std::string& filepath);

@@ -1,4 +1,5 @@
 #include "rocket_pipeline.hpp"
+#include "rocket_model.hpp"
 #include <fstream>
 #include <iostream>
 #include <cassert>
@@ -21,6 +22,13 @@ namespace rocket {
 		vkDestroyPipeline(rocketDevice.device(), graphicsPipeline, nullptr);
 	}
 
+	void RocketPipeline::bind(VkCommandBuffer commandBuffer)
+	{
+		// Bind the pipeline to the command buffer
+		// This is graphics pipeline, so we use VK_PIPELINE_BIND_POINT_GRAPHICS
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+	}
+
 	PipelineConfigInfo RocketPipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height)
 	{
 		PipelineConfigInfo configInfo{};
@@ -39,13 +47,6 @@ namespace rocket {
 		// Everything outside scissors will be discraded
 		configInfo.scissor.offset = { 0, 0 };
 		configInfo.scissor.extent = { width, height };
-
-		// Combine viewport and scissors
-		configInfo.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		configInfo.viewportInfo.viewportCount = 1;
-		configInfo.viewportInfo.pViewports = &configInfo.viewport;
-		configInfo.viewportInfo.scissorCount = 1;
-		configInfo.viewportInfo.pScissors = &configInfo.scissor;
 
 		// Rasterizer - takes geometry and turns it into fragments to be colored by the fragment shader
 		configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -126,11 +127,11 @@ namespace rocket {
 
 	// Create the graphics pipeline using given vertex and fragment shader files
 	void RocketPipeline::createGraphicsPipeline(
-		const std::string& vertFilePath, 
-		const std::string& fragFilePath, 
+		const std::string& vertFilePath,
+		const std::string& fragFilePath,
 		PipelineConfigInfo pipelineConfigInfo)
 	{
-		assert(pipelineConfigInfo.pipelineLayout != VK_NULL_HANDLE 
+		assert(pipelineConfigInfo.pipelineLayout != VK_NULL_HANDLE
 			&& "Cannot create grahpics pipeline: no pipelineLayout provided in configInfo!");
 		assert(pipelineConfigInfo.renderPass != VK_NULL_HANDLE
 			&& "Cannot create grahpics pipeline: no pipelineLayout provided in configInfo!");
@@ -157,12 +158,23 @@ namespace rocket {
 		shaderStages[1].pSpecializationInfo = nullptr;  // Optional
 		shaderStages[1].pNext = nullptr;               // Optional
 
+		// Vertex input config
+		auto bindingDescription = RocketModel::Vertex::getBindingDescriptions();
+		auto attributeDescriptions = RocketModel::Vertex::getAttributeDescriptions();
+
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 0;
-		vertexInputInfo.vertexAttributeDescriptionCount = 0;
-		vertexInputInfo.pVertexBindingDescriptions = nullptr;  // Optional
-		vertexInputInfo.pVertexAttributeDescriptions = nullptr;  // Optional
+		vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescription.size());
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+		vertexInputInfo.pVertexBindingDescriptions = bindingDescription.data();  // Optional
+		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();  // Optional
+
+		VkPipelineViewportStateCreateInfo viewportInfo{};
+		viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewportInfo.viewportCount = 1;
+		viewportInfo.pViewports = &pipelineConfigInfo.viewport;  // Optional
+		viewportInfo.scissorCount = 1;
+		viewportInfo.pScissors = &pipelineConfigInfo.scissor;  // Optional
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -170,7 +182,7 @@ namespace rocket {
 		pipelineInfo.pStages = shaderStages;
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
 		pipelineInfo.pInputAssemblyState = &pipelineConfigInfo.inputAssemblyInfo;
-		pipelineInfo.pViewportState = &pipelineConfigInfo.viewportInfo;
+		pipelineInfo.pViewportState = &viewportInfo;
 		pipelineInfo.pRasterizationState = &pipelineConfigInfo.rasterizationInfo;
 		pipelineInfo.pMultisampleState = &pipelineConfigInfo.multisampleInfo;
 		pipelineInfo.pColorBlendState = &pipelineConfigInfo.colorBlendInfo;

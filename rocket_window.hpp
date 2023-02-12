@@ -14,6 +14,8 @@ namespace rocket {
 		RocketWindow &operator=(const RocketWindow &) = delete; // Disable copying RocketWindow
 
 		bool shouldClose();
+		VkExtent2D getExtent() { return { static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+	}
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
 	private:
