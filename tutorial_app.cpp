@@ -8,7 +8,7 @@ namespace rocket {
 	{
 		loadModels();
 		createPipelineLayout();
-		createPipeline();
+		recreateSwapChain();
 		createCommandBuffers();
 
 
@@ -41,14 +41,17 @@ namespace rocket {
 	}
 	void TutorialApp::createPipeline()
 	{
-		auto pipelineConfig = RocketPipeline::defaultPipelineConfigInfo(rocketSwapChain.width(), rocketSwapChain.height()); // Swap chain width and height not always equal to screens
-		pipelineConfig.renderPass = rocketSwapChain.getRenderPass(); // Default render pass
+		assert(rocketSwapChain != nullptr && "Swap chain must be created before pipeline!");
+		assert(pipelineLayout != nullptr && "Pipeline layout must be created before pipeline!");
+		PipelineConfigInfo pipelineConfig{};
+		RocketPipeline::defaultPipelineConfigInfo(pipelineConfig); // Swap chain width and height not always equal to screens
+		pipelineConfig.renderPass = rocketSwapChain -> getRenderPass(); // Default render pass
 		pipelineConfig.pipelineLayout = pipelineLayout;
 		rocketPipeline = std::make_unique<RocketPipeline>(rocketDevice, vertShaderPath, fragShaderPath, pipelineConfig);
 	}
 	void TutorialApp::createCommandBuffers()
 	{
-		commandBuffers.resize(rocketSwapChain.imageCount()); // Either 2 or 3
+		commandBuffers.resize(rocketSwapChain -> imageCount()); // Either 2 or 3
 
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -60,56 +63,37 @@ namespace rocket {
 			throw std::runtime_error("Failed to allocate command buffers!");
 		}
 
-		// Record drawing commands into each command buffer
-		for (int i = 0; i < commandBuffers.size(); i++) {
-			VkCommandBufferBeginInfo beginInfo{};
-			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-			if (vkBeginCommandBuffer(commandBuffers[i], &beginInfo) != VK_SUCCESS) {
-				throw std::runtime_error("Failed to begin recording command buffer!");
-			}
-
-			// Start the render pass
-			VkRenderPassBeginInfo renderPassInfo{};
-			renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-			renderPassInfo.renderPass = rocketSwapChain.getRenderPass();
-			renderPassInfo.framebuffer = rocketSwapChain.getFrameBuffer(i);
-			// Render area is entire swap chain extent
-			renderPassInfo.renderArea.offset = { 0, 0 };
-			renderPassInfo.renderArea.extent = rocketSwapChain.getSwapChainExtent();
-
-			// Clear values for all attachments
-			std::array<VkClearValue, 2> clearValues{};
-			clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f }; // Color buffer, depthStencil on index 0 would be ingored because how we strucutred our render pass
-			clearValues[1].depthStencil = { 1.0f, 0 }; // Depth buffer
-			renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-			renderPassInfo.pClearValues = clearValues.data();
-
-			vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE); 
-			// VK_SUBPASS_CONTENTS_INLINE: Render pass commands will be embedded in the primary command buffer, and no secondary command buffers will be executed
-			rocketPipeline.get()->bind(commandBuffers[i]);
-			//vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
-
-			rocketModel -> bind(commandBuffers[i]);
-			rocketModel -> draw(commandBuffers[i]);
-
-			vkCmdEndRenderPass(commandBuffers[i]);
-			if(vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS ){
-				throw std::runtime_error("Failed to record command buffer!");
-			}
-		}
-
+	}
+	void TutorialApp::freeCommandBuffers()
+	{
+		vkFreeCommandBuffers(rocketDevice.device(), 
+			rocketDevice.getCommandPool() , 
+			static_cast<uint32_t>(commandBuffers.size()), 
+			commandBuffers.data());
+		commandBuffers.clear();
 	}
 	void TutorialApp::drawFrame()
 	{
 		uint32_t imageIndex; // Current frame buffer
-		auto result = rocketSwapChain.acquireNextImage(&imageIndex);
+		auto result = rocketSwapChain -> acquireNextImage(&imageIndex);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			recreateSwapChain();
+			return;
+		}
+
 
 		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 			throw std::runtime_error("Failed to acquire swap chain image!");
 		}
-
-		result = rocketSwapChain.submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex); // Submit command buffer to queue
+		recordCommandBuffer(imageIndex);
+		result = rocketSwapChain-> submitCommandBuffers(&commandBuffers[imageIndex], &imageIndex); // Submit command buffer to queue
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || rocketWindow.wasWindowResized())
+		{
+			rocketWindow.resetWindowResizedFlag();
+			recreateSwapChain();
+			return;
+		}
 		if (result != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to submit draw command buffer!");
@@ -124,5 +108,83 @@ namespace rocket {
 		};
 
 		rocketModel = std::make_unique<RocketModel>(rocketDevice, vertices);
+	}
+	void TutorialApp::recreateSwapChain()
+	{
+		auto extent = rocketWindow.getExtent();
+		// Check for minimized window
+		while (extent.width == 0 || extent.height == 0) {
+			extent = rocketWindow.getExtent();
+			glfwWaitEvents();
+		}
+
+		vkDeviceWaitIdle(rocketDevice.device());
+
+		if (rocketSwapChain == nullptr) {
+			rocketSwapChain = std::make_unique<RocketSwapChain>(rocketDevice, extent);
+		}
+		else {
+			rocketSwapChain = std::make_unique<RocketSwapChain>(rocketDevice, extent, std::move(rocketSwapChain));
+			if (rocketSwapChain->imageCount() != commandBuffers.size()) {
+				freeCommandBuffers();
+				createCommandBuffers();
+			}
+		}
+
+		// If pipeline is compatable with new swap chain, no need to recreate
+		createPipeline();
+	}
+	void TutorialApp::recordCommandBuffer(int imageIndex)
+	{
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+		if (vkBeginCommandBuffer(commandBuffers[imageIndex], &beginInfo) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to begin recording command buffer!");
+		}
+
+		// Start the render pass
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = rocketSwapChain->getRenderPass();
+		renderPassInfo.framebuffer = rocketSwapChain->getFrameBuffer(imageIndex);
+		// Render area is entire swap chain extent
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = rocketSwapChain->getSwapChainExtent();
+
+		// Clear values for all attachments
+		std::array<VkClearValue, 2> clearValues{};
+		clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f }; // Color buffer, depthStencil on index 0 would be ingored because how we strucutred our render pass
+		clearValues[1].depthStencil = { 1.0f, 0 }; // Depth buffer
+		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		renderPassInfo.pClearValues = clearValues.data();
+
+		vkCmdBeginRenderPass(commandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = 0.0f;
+		viewport.width = (float)rocketSwapChain->getSwapChainExtent().width;
+		viewport.height = (float)rocketSwapChain->getSwapChainExtent().height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = rocketSwapChain->getSwapChainExtent();
+
+		vkCmdSetViewport(commandBuffers[imageIndex], 0, 1, &viewport);
+		vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
+
+		// VK_SUBPASS_CONTENTS_INLINE: Render pass commands will be embedded in the primary command buffer, and no secondary command buffers will be executed
+		rocketPipeline.get()->bind(commandBuffers[imageIndex]);
+		//vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
+
+		rocketModel->bind(commandBuffers[imageIndex]);
+		rocketModel->draw(commandBuffers[imageIndex]);
+
+		vkCmdEndRenderPass(commandBuffers[imageIndex]);
+		if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
+			throw std::runtime_error("Failed to record command buffer!");
+		}
 	}
 }

@@ -5,7 +5,6 @@
 namespace rocket {
 	RocketModel::RocketModel(RocketDevice& device, const std::vector<Vertex>& vertices) : rocketDevice {device}
 	{
-		std::cout << "Creating vertex buffer" << std::endl;
 		createVertexBuffers(vertices);
 	}
 
@@ -17,7 +16,6 @@ namespace rocket {
 
 	void RocketModel::bind(VkCommandBuffer commandBuffer)
 	{
-		std::cout << "Binding vertex buffer: "<< vertexBuffer << std::endl;
 		VkBuffer buffers[] = {vertexBuffer};
 		VkDeviceSize offsets[] = { 0 };
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, buffers, offsets); // Record command to bind vertex buffer

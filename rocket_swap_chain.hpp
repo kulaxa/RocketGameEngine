@@ -8,6 +8,7 @@
 // std lib headers
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace rocket {
 
@@ -16,11 +17,14 @@ namespace rocket {
         static constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
         RocketSwapChain(RocketDevice& deviceRef, VkExtent2D windowExtent);
+        RocketSwapChain(RocketDevice& deviceRef, VkExtent2D windowExtent, std::shared_ptr<RocketSwapChain> previous);
+
         ~RocketSwapChain();
 
         RocketSwapChain(const RocketSwapChain&) = delete;
-        void operator=(const RocketSwapChain&) = delete;
+        RocketSwapChain& operator=(const RocketSwapChain&) = delete;
 
+        void init();
         VkFramebuffer getFrameBuffer(int index) { return swapChainFramebuffers[index]; }
         VkRenderPass getRenderPass() { return renderPass; }
         VkImageView getImageView(int index) { return swapChainImageViews[index]; }
@@ -69,6 +73,7 @@ namespace rocket {
         VkExtent2D windowExtent;
 
         VkSwapchainKHR swapChain;
+        std::shared_ptr<RocketSwapChain> oldSwapChain;
 
         std::vector<VkSemaphore> imageAvailableSemaphores;
         std::vector<VkSemaphore> renderFinishedSemaphores;

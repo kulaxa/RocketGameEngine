@@ -34,7 +34,7 @@ namespace rocket {
 
         // Not copyable or movable
         RocketDevice(const RocketDevice&) = delete;
-        void operator=(const RocketDevice&) = delete;
+        RocketDevice& operator=(const RocketDevice&) = delete;
         RocketDevice(RocketDevice&&) = delete;
         RocketDevice& operator=(RocketDevice&&) = delete;
 

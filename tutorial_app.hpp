@@ -28,12 +28,15 @@ namespace rocket {
 		void createPipelineLayout();
 		void createPipeline();
 		void createCommandBuffers();
+		void freeCommandBuffers();
 		void drawFrame();
 		void loadModels();
+		void recreateSwapChain();
+		void recordCommandBuffer(int imageIndex);
 
 		RocketWindow rocketWindow{ WIDTH, HEIGHT, "Rocket" };
 		RocketDevice rocketDevice{ rocketWindow };
-		RocketSwapChain rocketSwapChain{ rocketDevice, rocketWindow.getExtent()};
+		std::unique_ptr<RocketSwapChain> rocketSwapChain;
 		std::unique_ptr<RocketPipeline> rocketPipeline;
 		VkPipelineLayout pipelineLayout;
 		std::vector<VkCommandBuffer> commandBuffers;

@@ -29,24 +29,18 @@ namespace rocket {
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 	}
 
-	PipelineConfigInfo RocketPipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height)
+	void RocketPipeline::defaultPipelineConfigInfo(PipelineConfigInfo& configInfo)
 	{
-		PipelineConfigInfo configInfo{};
 		// Assembly stage - using list of triangled, each 6 numbers is one triagle
 		configInfo.inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 		configInfo.inputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		configInfo.inputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
 
-		// Viewport - picture goes from (0,0) to (width, height)
-		configInfo.viewport.x = 0.0f;
-		configInfo.viewport.y = 0.0f;
-		configInfo.viewport.width = static_cast<float>(width);
-		configInfo.viewport.height = static_cast<float>(height);
-		configInfo.viewport.minDepth = 0.0f;
-		configInfo.viewport.maxDepth = 1.0f;
-		// Everything outside scissors will be discraded
-		configInfo.scissor.offset = { 0, 0 };
-		configInfo.scissor.extent = { width, height };
+		configInfo.viewport.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		configInfo.viewport.viewportCount = 1;
+		configInfo.viewport.scissorCount = 1;
+		configInfo.viewport.pViewports = nullptr; // Optional
+		configInfo.viewport.pScissors = nullptr; // 
 
 		// Rasterizer - takes geometry and turns it into fragments to be colored by the fragment shader
 		configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -104,7 +98,13 @@ namespace rocket {
 		configInfo.depthStencilInfo.stencilTestEnable = VK_FALSE;
 		configInfo.depthStencilInfo.front = {};  // Optional
 		configInfo.depthStencilInfo.back = {};   // Optional
-		return configInfo;
+
+
+		configInfo.dynamicStateEnables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+		configInfo.dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
+		configInfo.dynamicStateInfo.pDynamicStates = configInfo.dynamicStateEnables.data();
+		configInfo.dynamicStateInfo.flags = 0;
 	}
 
 	// Read a file into a vector of chars
@@ -169,12 +169,6 @@ namespace rocket {
 		vertexInputInfo.pVertexBindingDescriptions = bindingDescription.data();  // Optional
 		vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();  // Optional
 
-		VkPipelineViewportStateCreateInfo viewportInfo{};
-		viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-		viewportInfo.viewportCount = 1;
-		viewportInfo.pViewports = &pipelineConfigInfo.viewport;  // Optional
-		viewportInfo.scissorCount = 1;
-		viewportInfo.pScissors = &pipelineConfigInfo.scissor;  // Optional
 
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -182,12 +176,12 @@ namespace rocket {
 		pipelineInfo.pStages = shaderStages;
 		pipelineInfo.pVertexInputState = &vertexInputInfo;
 		pipelineInfo.pInputAssemblyState = &pipelineConfigInfo.inputAssemblyInfo;
-		pipelineInfo.pViewportState = &viewportInfo;
+		pipelineInfo.pViewportState = &pipelineConfigInfo.viewport;
 		pipelineInfo.pRasterizationState = &pipelineConfigInfo.rasterizationInfo;
 		pipelineInfo.pMultisampleState = &pipelineConfigInfo.multisampleInfo;
 		pipelineInfo.pColorBlendState = &pipelineConfigInfo.colorBlendInfo;
 		pipelineInfo.pDepthStencilState = &pipelineConfigInfo.depthStencilInfo;
-		pipelineInfo.pDynamicState = nullptr;  // Optional
+		pipelineInfo.pDynamicState = &pipelineConfigInfo.dynamicStateInfo;  // Optional
 
 		pipelineInfo.layout = pipelineConfigInfo.pipelineLayout;
 		pipelineInfo.renderPass = pipelineConfigInfo.renderPass;
