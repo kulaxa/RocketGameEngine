@@ -1,12 +1,27 @@
 #include "tutorial_app.hpp"
 #include "rocket_pipeline.hpp"
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
+
 #include <iostream>
 #include <stdexcept>
 #include <array>
+
+
 namespace rocket {
+	// This is temp
+	struct SimplePushConstantData {
+		glm::mat2 transform{ 0.5f };
+		glm::vec2 offset;
+		alignas(16) glm::vec3 color;
+	};
+
 	TutorialApp::TutorialApp()
 	{
-		loadModels();
+		loadGameObjects();
 		createPipelineLayout();
 		recreateSwapChain();
 		createCommandBuffers();
@@ -28,12 +43,17 @@ namespace rocket {
 	}
 	void TutorialApp::createPipelineLayout()
 	{
+		VkPushConstantRange pushConstantRange{};
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+		pushConstantRange.offset = 0;
+		pushConstantRange.size = sizeof(SimplePushConstantData);
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = 0;
 		pipelineLayoutInfo.pSetLayouts = nullptr;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
-		pipelineLayoutInfo.pPushConstantRanges = nullptr;
+		pipelineLayoutInfo.pushConstantRangeCount = 1;
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
 
 		if (vkCreatePipelineLayout(rocketDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to create Pipeline Layout!");
@@ -99,7 +119,7 @@ namespace rocket {
 			throw std::runtime_error("Failed to submit draw command buffer!");
 		}
 	}
-	void TutorialApp::loadModels()
+	void TutorialApp::loadGameObjects()
 	{
 		std::vector<RocketModel::Vertex> vertices{
 			{{0.0f, -0.5f}, {1.0f, 0.0f , 0.0f}},
@@ -107,7 +127,15 @@ namespace rocket {
 			{{-0.5f, 0.5f}, {0.0f, 0.0f , 1.0f}}
 		};
 
-		rocketModel = std::make_unique<RocketModel>(rocketDevice, vertices);
+		auto rocketModel = std::make_shared<RocketModel>(rocketDevice, vertices); // one model for multiple game objects
+
+		auto triangle = RocketGameObject::createGameObject();
+		triangle.model = rocketModel;
+		triangle.color = { 0.1f, 0.8f, 0.1f };
+		triangle.transform2d.translation.x = 0.2f;
+		triangle.transform2d.scale = { 2.0f, 0.5f };
+		triangle.transform2d.rotation = 0.25f * glm::two_pi<float>(); // 90 degrees, using radians
+		gameObjects.push_back(std::move(triangle));
 	}
 	void TutorialApp::recreateSwapChain()
 	{
@@ -154,7 +182,7 @@ namespace rocket {
 
 		// Clear values for all attachments
 		std::array<VkClearValue, 2> clearValues{};
-		clearValues[0].color = { 0.1f, 0.1f, 0.1f, 1.0f }; // Color buffer, depthStencil on index 0 would be ingored because how we strucutred our render pass
+		clearValues[0].color = { 0.01f, 0.01f, 0.01f, 1.0f }; // Color buffer, depthStencil on index 0 would be ingored because how we strucutred our render pass
 		clearValues[1].depthStencil = { 1.0f, 0 }; // Depth buffer
 		renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 		renderPassInfo.pClearValues = clearValues.data();
@@ -176,15 +204,34 @@ namespace rocket {
 		vkCmdSetScissor(commandBuffers[imageIndex], 0, 1, &scissor);
 
 		// VK_SUBPASS_CONTENTS_INLINE: Render pass commands will be embedded in the primary command buffer, and no secondary command buffers will be executed
-		rocketPipeline.get()->bind(commandBuffers[imageIndex]);
-		//vkCmdDraw(commandBuffers[i], 3, 1, 0, 0);
-
-		rocketModel->bind(commandBuffers[imageIndex]);
-		rocketModel->draw(commandBuffers[imageIndex]);
+		renderGameObjects(commandBuffers[imageIndex]);
 
 		vkCmdEndRenderPass(commandBuffers[imageIndex]);
 		if (vkEndCommandBuffer(commandBuffers[imageIndex]) != VK_SUCCESS) {
 			throw std::runtime_error("Failed to record command buffer!");
+		}
+	}
+	void TutorialApp::renderGameObjects(VkCommandBuffer commandBuffer)
+	{
+		rocketPipeline ->bind(commandBuffer);
+		for (auto& gameObject : gameObjects) {
+			gameObject.transform2d.rotation = glm::mod(gameObject.transform2d.rotation + 0.01f, glm::two_pi<float>()); // 90 degrees, using radians
+
+			SimplePushConstantData push{};
+			push.offset = gameObject.transform2d.translation;
+			push.color = gameObject.color;
+			push.transform = gameObject.transform2d.mat2();
+
+			vkCmdPushConstants(
+				commandBuffer,
+				pipelineLayout,
+				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+				0,
+				sizeof(SimplePushConstantData),
+				&push);
+			gameObject.model ->bind(commandBuffer);
+			gameObject.model ->draw(commandBuffer);
+
 		}
 	}
 }

@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include "rocket_model.hpp"
+#include "rocket_game_object.hpp"
 
 namespace rocket {
 
@@ -30,9 +31,10 @@ namespace rocket {
 		void createCommandBuffers();
 		void freeCommandBuffers();
 		void drawFrame();
-		void loadModels();
+		void loadGameObjects();
 		void recreateSwapChain();
 		void recordCommandBuffer(int imageIndex);
+		void renderGameObjects(VkCommandBuffer commandBuffer);
 
 		RocketWindow rocketWindow{ WIDTH, HEIGHT, "Rocket" };
 		RocketDevice rocketDevice{ rocketWindow };
@@ -40,6 +42,6 @@ namespace rocket {
 		std::unique_ptr<RocketPipeline> rocketPipeline;
 		VkPipelineLayout pipelineLayout;
 		std::vector<VkCommandBuffer> commandBuffers;
-		std::unique_ptr<RocketModel> rocketModel;
+		std::vector<RocketGameObject> gameObjects;
 	};
 }
