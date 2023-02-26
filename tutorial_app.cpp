@@ -10,15 +10,6 @@
 #include <stdexcept>
 #include <array>
 
-// Move somewhere else
-static void check_vk_result(VkResult err)
-{
-	if (err == 0)
-		return;
-	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
-	if (err < 0)
-		abort();
-}
 namespace rocket {
 	// This is temp
 	struct SimplePushConstantData {
@@ -96,25 +87,17 @@ namespace rocket {
 			// Imgui render
 			ImGui::Render();
 
-
-			//const bool is_minimized = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
-			//if (!is_minimized)
-			//{
-			//	//wd->ClearValue.color.float32[0] = clear_color.x * clear_color.w;
-			//	//wd->ClearValue.color.float32[1] = clear_color.y * clear_color.w;
-			//	//wd->ClearValue.color.float32[2] = clear_color.z * clear_color.w;
-			//	//wd->ClearValue.color.float32[3] = clear_color.w;
-			//	FrameRender(rocketWindow.getWindow(), draw_data);
-			//	FramePresent(wd);
-			//}
-
-
 			drawFrame();
 		}
 		vkDeviceWaitIdle(rocketDevice.device());
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+		vkDeviceWaitIdle(rocketDevice.device());
+
+		vkDestroyDescriptorPool(rocketDevice.device(), rocketDevice.getDescriptorPool(), nullptr);
+
+
 	}
 	void TutorialApp::createPipelineLayout()
 	{
@@ -329,61 +312,15 @@ namespace rocket {
 		// Setup Platform/Renderer backends
 		ImGui_ImplGlfw_InitForVulkan(rocketWindow.getWindow(),  true);
 		ImGui_ImplVulkan_InitInfo init_info = {};
-		rocketDevice.initDeviceImgui(init_info);
-		init_info.ImageCount = static_cast<uint32_t> (rocketSwapChain ->imageCount());
-		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-		init_info.Allocator = nullptr;
-		init_info.CheckVkResultFn = check_vk_result;
+		rocketDevice.initDeviceImgui(rocketSwapChain->imageCount(), init_info);
 		ImGui_ImplVulkan_Init(&init_info, rocketSwapChain-> getRenderPass());
 
-		// Load Fonts
-		// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-		// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-		// - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-		// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-		// - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-		// - Read 'docs/FONTS.md' for more instructions and details.
-		// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-		//io.Fonts->AddFontDefault();
-		//io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-		//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-		//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-		//IM_ASSERT(font != NULL);
+		// Upload fonts
+		VkCommandBuffer command_buffer = rocketDevice.beginSingleTimeCommands();
+		ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+		rocketDevice.endSingleTimeCommands(command_buffer);
 
-
-			   //// Upload Fonts
-		{
-			// Use any command queue
-
-			VkCommandBuffer command_buffer = 
-			rocketDevice.beginSingleTimeCommands();
-
-			//VkResult err = vkResetCommandPool(rocketDevice.device(), command_pool, 0);
-			//check_vk_result(err);
-			//VkCommandBufferBeginInfo begin_info = {};
-			//begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-			//begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-			//err = vkBeginCommandBuffer(command_buffer, &begin_info);
-			//check_vk_result(err);
-
-			ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-
-			//VkSubmitInfo end_info = {};
-			//end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-			//end_info.commandBufferCount = 1;
-			//end_info.pCommandBuffers = &command_buffer;
-			//err = vkEndCommandBuffer(command_buffer);
-			//check_vk_result(err);
-			//err = vkQueueSubmit(rocketDevice.graphicsQueue(), 1, &end_info, VK_NULL_HANDLE);
-			//check_vk_result(err);
-
-			//err = vkDeviceWaitIdle(rocketDevice.device());
-			//check_vk_result(err);
-			rocketDevice.endSingleTimeCommands(command_buffer);
-
-		}
+		
 
 	}
 
