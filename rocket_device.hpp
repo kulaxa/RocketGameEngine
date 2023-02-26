@@ -7,6 +7,15 @@
 #include <vector>
 #include <imgui_impl_vulkan.h>
 
+static void check_vk_result(VkResult err)
+{
+    if (err == 0)
+        return;
+    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+    if (err < 0)
+        abort();
+}
+
 namespace rocket {
 
     struct SwapChainSupportDetails {
@@ -41,6 +50,7 @@ namespace rocket {
         RocketDevice& operator=(RocketDevice&&) = delete;
 
         VkCommandPool getCommandPool() { return commandPool; }
+        VkDescriptorPool getDescriptorPool() { return descriptorPool; }
         VkDevice device() { return device_; }
         VkSurfaceKHR surface() { return surface_; }
         VkQueue graphicsQueue() { return graphicsQueue_; }
@@ -71,7 +81,7 @@ namespace rocket {
             VkImage& image,
             VkDeviceMemory& imageMemory);
 
-        void initDeviceImgui(ImGui_ImplVulkan_InitInfo& initInfo);
+        void initDeviceImgui(size_t imageCount, ImGui_ImplVulkan_InitInfo& initInfo);
 
         VkPhysicalDeviceProperties properties;
 
@@ -98,11 +108,14 @@ namespace rocket {
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
         RocketWindow& window;
         VkCommandPool commandPool;
+        VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 
         VkDevice device_;
         VkSurfaceKHR surface_;
         VkQueue graphicsQueue_;
         VkQueue presentQueue_;
+
+
 
         const std::vector<const char*> validationLayers = { "VK_LAYER_KHRONOS_validation" };
         const std::vector<const char*> deviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };

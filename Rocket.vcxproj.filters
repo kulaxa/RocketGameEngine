@@ -16,6 +16,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{181de1aa-8adb-4ea2-b0e3-c14beb43216e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="imgui\backend">
+      <UniqueIdentifier>{8ebf733d-e543-4827-9959-7591a523bfa5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -39,12 +42,6 @@
     <ClCompile Include="rocket_model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="imgui\backend\imgui_impl_glfw.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui\backend\imgui_impl_vulkan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="imgui.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
@@ -59,6 +56,12 @@
     </ClCompile>
     <ClCompile Include="imgui_widgets.cpp">
       <Filter>imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\backend\imgui_impl_glfw.cpp">
+      <Filter>imgui\backend</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\backend\imgui_impl_vulkan.cpp">
+      <Filter>imgui\backend</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -83,12 +86,6 @@
     <ClInclude Include="rocket_game_object.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="imgui\backend\imgui_impl_glfw.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui\backend\imgui_impl_vulkan.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="imconfig.h">
       <Filter>imgui</Filter>
     </ClInclude>
@@ -106,6 +103,12 @@
     </ClInclude>
     <ClInclude Include="imstb_truetype.h">
       <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\backend\imgui_impl_glfw.h">
+      <Filter>imgui\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\backend\imgui_impl_vulkan.h">
+      <Filter>imgui\backend</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

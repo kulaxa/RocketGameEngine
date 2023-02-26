@@ -5,16 +5,8 @@
 #include <iostream>
 #include <set>
 #include <unordered_set>
-// Move somewhere else
-static VkDescriptorPool         g_DescriptorPool = VK_NULL_HANDLE;
-static void check_vk_result(VkResult err)
-{
-    if (err == 0)
-        return;
-    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
-    if (err < 0)
-        abort();
-}
+
+
 namespace rocket {
 
     // local callback functions
@@ -545,7 +537,7 @@ namespace rocket {
         }
     }
 
-    void RocketDevice::initDeviceImgui(ImGui_ImplVulkan_InitInfo& initInfo)
+    void RocketDevice::initDeviceImgui(size_t imageCount, ImGui_ImplVulkan_InitInfo& initInfo)
     {
 
         {
@@ -569,7 +561,8 @@ namespace rocket {
             pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
             pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
             pool_info.pPoolSizes = pool_sizes;
-            VkResult err = vkCreateDescriptorPool(device_, &pool_info, nullptr, &g_DescriptorPool);
+
+            VkResult err = vkCreateDescriptorPool(device_, &pool_info, nullptr, &descriptorPool);
             check_vk_result(err);
         }
         initInfo.Instance = instance;
@@ -578,11 +571,13 @@ namespace rocket {
         initInfo.QueueFamily = 0;  // Todo: fix this
         initInfo.Queue = graphicsQueue_;
         initInfo.PipelineCache = nullptr;
-        initInfo.DescriptorPool = g_DescriptorPool;
+        initInfo.DescriptorPool = descriptorPool;
         initInfo.Subpass = 0;
         initInfo.MinImageCount = 2;
-
- 
+        initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+        initInfo.Allocator = nullptr;
+        initInfo.CheckVkResultFn = check_vk_result;
+        initInfo.ImageCount = static_cast<uint32_t> (imageCount);
         
    
 
