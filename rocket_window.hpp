@@ -20,6 +20,8 @@ namespace rocket {
 
 
 		void createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
+
+		GLFWwindow * getWindow() { return window; } // Probably not a good idea to expose this
 	private:
 		static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 		void initWindow();

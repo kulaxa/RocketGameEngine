@@ -5,7 +5,16 @@
 #include <iostream>
 #include <set>
 #include <unordered_set>
-
+// Move somewhere else
+static VkDescriptorPool         g_DescriptorPool = VK_NULL_HANDLE;
+static void check_vk_result(VkResult err)
+{
+    if (err == 0)
+        return;
+    fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+    if (err < 0)
+        abort();
+}
 namespace rocket {
 
     // local callback functions
@@ -453,6 +462,7 @@ namespace rocket {
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
         vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
         return commandBuffer;
     }
 
@@ -533,6 +543,49 @@ namespace rocket {
         if (vkBindImageMemory(device_, image, imageMemory, 0) != VK_SUCCESS) {
             throw std::runtime_error("failed to bind image memory!");
         }
+    }
+
+    void RocketDevice::initDeviceImgui(ImGui_ImplVulkan_InitInfo& initInfo)
+    {
+
+        {
+            VkDescriptorPoolSize pool_sizes[] =
+            {
+                { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+                { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+                { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+                { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+                { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+                { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+                { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+            };
+            VkDescriptorPoolCreateInfo pool_info = {};
+            pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+            pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+            pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
+            pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+            pool_info.pPoolSizes = pool_sizes;
+            VkResult err = vkCreateDescriptorPool(device_, &pool_info, nullptr, &g_DescriptorPool);
+            check_vk_result(err);
+        }
+        initInfo.Instance = instance;
+        initInfo.PhysicalDevice = physicalDevice;
+        initInfo.Device = device_;
+        initInfo.QueueFamily = 0;  // Todo: fix this
+        initInfo.Queue = graphicsQueue_;
+        initInfo.PipelineCache = nullptr;
+        initInfo.DescriptorPool = g_DescriptorPool;
+        initInfo.Subpass = 0;
+        initInfo.MinImageCount = 2;
+
+ 
+        
+   
+
     }
 
 }  // namespace rocket

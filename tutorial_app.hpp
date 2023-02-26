@@ -8,6 +8,12 @@
 #include <vector>
 #include "rocket_model.hpp"
 #include "rocket_game_object.hpp"
+//
+//
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
 
 namespace rocket {
 
@@ -35,6 +41,7 @@ namespace rocket {
 		void recreateSwapChain();
 		void recordCommandBuffer(int imageIndex);
 		void renderGameObjects(VkCommandBuffer commandBuffer);
+		void setupImGui();
 
 		RocketWindow rocketWindow{ WIDTH, HEIGHT, "Rocket" };
 		RocketDevice rocketDevice{ rocketWindow };
