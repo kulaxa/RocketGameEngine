@@ -1,9 +1,11 @@
 #pragma once
 #include "rocket_window.hpp"
+#
 
 // std lib headers
 #include <string>
 #include <vector>
+#include <imgui_impl_vulkan.h>
 
 namespace rocket {
 
@@ -68,6 +70,8 @@ namespace rocket {
             VkMemoryPropertyFlags properties,
             VkImage& image,
             VkDeviceMemory& imageMemory);
+
+        void initDeviceImgui(ImGui_ImplVulkan_InitInfo& initInfo);
 
         VkPhysicalDeviceProperties properties;
 
