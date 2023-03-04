@@ -3,7 +3,7 @@
 #include "rocket_window.hpp"
 #include "rocket_pipeline.hpp"
 #include "rocket_device.hpp"
-#include "rocket_swap_chain.hpp"
+#include "rocket_renderer.hpp"
 #include <memory>
 #include <vector>
 #include "rocket_model.hpp"
@@ -18,8 +18,8 @@ namespace rocket {
 
 	class TutorialApp {
 	public:
-		static constexpr int WIDTH = 800;
-		static constexpr int HEIGHT = 600;
+		static constexpr int WIDTH = 1500;
+		static constexpr int HEIGHT = 1000;
 		std::string fragShaderPath = "shaders/simple_shader.frag.spv";
 		std::string vertShaderPath = "shaders/simple_shader.vert.spv";
 
@@ -33,21 +33,14 @@ namespace rocket {
 	private:
 		void createPipelineLayout();
 		void createPipeline();
-		void createCommandBuffers();
-		void freeCommandBuffers();
-		void drawFrame();
 		void loadGameObjects();
-		void recreateSwapChain();
-		void recordCommandBuffer(int imageIndex);
 		void renderGameObjects(VkCommandBuffer commandBuffer);
-		void setupImGui();
 
 		RocketWindow rocketWindow{ WIDTH, HEIGHT, "Rocket" };
 		RocketDevice rocketDevice{ rocketWindow };
-		std::unique_ptr<RocketSwapChain> rocketSwapChain;
+		RocketRenderer rocketRenderer{ rocketWindow, rocketDevice };
 		std::unique_ptr<RocketPipeline> rocketPipeline;
 		VkPipelineLayout pipelineLayout;
-		std::vector<VkCommandBuffer> commandBuffers;
 		std::vector<RocketGameObject> gameObjects;
 	};
 }
