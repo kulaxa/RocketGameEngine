@@ -1,7 +1,6 @@
 #pragma once
 
 #include "rocket_window.hpp"
-#include "rocket_pipeline.hpp"
 #include "rocket_device.hpp"
 #include "rocket_renderer.hpp"
 #include <memory>
@@ -31,16 +30,11 @@ namespace rocket {
 
 		void run();
 	private:
-		void createPipelineLayout();
-		void createPipeline();
 		void loadGameObjects();
-		void renderGameObjects(VkCommandBuffer commandBuffer);
 
 		RocketWindow rocketWindow{ WIDTH, HEIGHT, "Rocket" };
 		RocketDevice rocketDevice{ rocketWindow };
 		RocketRenderer rocketRenderer{ rocketWindow, rocketDevice };
-		std::unique_ptr<RocketPipeline> rocketPipeline;
-		VkPipelineLayout pipelineLayout;
 		std::vector<RocketGameObject> gameObjects;
 	};
 }

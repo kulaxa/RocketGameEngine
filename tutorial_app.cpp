@@ -1,5 +1,5 @@
 #include "tutorial_app.hpp"
-#include "rocket_pipeline.hpp"
+#include "simple_render_system.hpp"
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
@@ -11,28 +11,18 @@
 #include <array>
 
 namespace rocket {
-	// This is temp
-	struct SimplePushConstantData {
-		glm::mat2 transform{ 0.5f };
-		glm::vec2 offset;
-		alignas(16) glm::vec3 color;
-	};
 
 	TutorialApp::TutorialApp()
 	{
 		loadGameObjects();
-		createPipelineLayout();
-		createPipeline();
-
 	}
 	TutorialApp::~TutorialApp()
 	{
-		vkDestroyPipelineLayout(rocketDevice.device(), pipelineLayout, nullptr);
 	}
 	void TutorialApp::run()
 	{
 		std::cout << "Starting Tutorial App." << std::endl;
-
+		SimpleRenderSystem simpleRenderSystem(rocketDevice, rocketRenderer.getSwapChainRenderPass());
 		// Our state
 		bool show_demo_window = true;
 		bool show_another_window = false;
@@ -87,7 +77,7 @@ namespace rocket {
 
 			if (auto commandBuffer = rocketRenderer.beginFrame()) {
 				rocketRenderer.beginSwapChainRenderPass(commandBuffer);
-				renderGameObjects(commandBuffer);
+				simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects);
 				ImDrawData* draw_data = ImGui::GetDrawData();
 				ImGui_ImplVulkan_RenderDrawData(draw_data, rocketRenderer.getCurrentCommandBuffer());
 				rocketRenderer.endSwapChainRenderPass(commandBuffer);
@@ -103,33 +93,6 @@ namespace rocket {
 		vkDestroyDescriptorPool(rocketDevice.device(), rocketDevice.getDescriptorPool(), nullptr);
 
 
-	}
-	void TutorialApp::createPipelineLayout()
-	{
-		VkPushConstantRange pushConstantRange{};
-		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-		pushConstantRange.offset = 0;
-		pushConstantRange.size = sizeof(SimplePushConstantData);
-
-		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;
-		pipelineLayoutInfo.pSetLayouts = nullptr;
-		pipelineLayoutInfo.pushConstantRangeCount = 1;
-		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
-
-		if (vkCreatePipelineLayout(rocketDevice.device(), &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-			throw std::runtime_error("Failed to create Pipeline Layout!");
-		}
-	}
-	void TutorialApp::createPipeline()
-	{
-		assert(pipelineLayout != nullptr && "Pipeline layout must be created before pipeline!");
-		PipelineConfigInfo pipelineConfig{};
-		RocketPipeline::defaultPipelineConfigInfo(pipelineConfig); // Swap chain width and height not always equal to screens
-		pipelineConfig.renderPass = rocketRenderer.getSwapChainRenderPass(); // Default render pass
-		pipelineConfig.pipelineLayout = pipelineLayout;
-		rocketPipeline = std::make_unique<RocketPipeline>(rocketDevice, vertShaderPath, fragShaderPath, pipelineConfig);
 	}
 
 
@@ -152,28 +115,5 @@ namespace rocket {
 		gameObjects.push_back(std::move(triangle));
 	}
 
-	void TutorialApp::renderGameObjects(VkCommandBuffer commandBuffer)
-	{
-		rocketPipeline ->bind(commandBuffer);
-		for (auto& gameObject : gameObjects) {
-			gameObject.transform2d.rotation = glm::mod(gameObject.transform2d.rotation + 0.01f, glm::two_pi<float>()); // 90 degrees, using radians
-
-			SimplePushConstantData push{};
-			push.offset = gameObject.transform2d.translation;
-			push.color = gameObject.color;
-			push.transform = gameObject.transform2d.mat2();
-
-			vkCmdPushConstants(
-				commandBuffer,
-				pipelineLayout,
-				VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-				0,
-				sizeof(SimplePushConstantData),
-				&push);
-			gameObject.model ->bind(commandBuffer);
-			gameObject.model ->draw(commandBuffer);
-
-		}
-	}
 
 }
