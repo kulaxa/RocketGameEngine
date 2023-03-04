@@ -168,8 +168,10 @@
     <ClCompile Include="rocket_device.cpp" />
     <ClCompile Include="rocket_model.cpp" />
     <ClCompile Include="rocket_pipeline.cpp" />
+    <ClCompile Include="rocket_renderer.cpp" />
     <ClCompile Include="rocket_swap_chain.cpp" />
     <ClCompile Include="rocket_window.cpp" />
+    <ClCompile Include="simple_render_system.cpp" />
     <ClCompile Include="tutorial_app.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -185,8 +187,10 @@
     <ClInclude Include="rocket_game_object.hpp" />
     <ClInclude Include="rocket_model.hpp" />
     <ClInclude Include="rocket_pipeline.hpp" />
+    <ClInclude Include="rocket_renderer.hpp" />
     <ClInclude Include="rocket_swap_chain.hpp" />
     <ClInclude Include="rocket_window.hpp" />
+    <ClInclude Include="simple_render_system.hpp" />
     <ClInclude Include="tutorial_app.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

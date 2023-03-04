@@ -63,6 +63,9 @@
     <ClCompile Include="imgui\backend\imgui_impl_vulkan.cpp">
       <Filter>imgui\backend</Filter>
     </ClCompile>
+    <ClCompile Include="rocket_renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="tutorial_app.hpp">
@@ -109,6 +112,9 @@
     </ClInclude>
     <ClInclude Include="imgui\backend\imgui_impl_vulkan.h">
       <Filter>imgui\backend</Filter>
+    </ClInclude>
+    <ClInclude Include="rocket_renderer.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
