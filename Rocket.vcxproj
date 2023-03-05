@@ -165,6 +165,8 @@
     <ClCompile Include="imgui_tables.cpp" />
     <ClCompile Include="imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="particle.cpp" />
+    <ClCompile Include="physics_system.cpp" />
     <ClCompile Include="rocket_device.cpp" />
     <ClCompile Include="rocket_model.cpp" />
     <ClCompile Include="rocket_pipeline.cpp" />
@@ -183,6 +185,8 @@
     <ClInclude Include="imstb_rectpack.h" />
     <ClInclude Include="imstb_textedit.h" />
     <ClInclude Include="imstb_truetype.h" />
+    <ClInclude Include="particle.hpp" />
+    <ClInclude Include="physics_system.hpp" />
     <ClInclude Include="rocket_device.hpp" />
     <ClInclude Include="rocket_game_object.hpp" />
     <ClInclude Include="rocket_model.hpp" />
