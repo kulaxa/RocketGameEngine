@@ -55,6 +55,7 @@ namespace rocket {
 		bool gravityApplied = false;
 		bool collisionApplied = false;
 		float radius = 0.0f;
+		float isStillY = false;
 		RocketGameObjectType type = RocketGameObjectType::NONE;
 		float mass = 0.0f;
 		glm::vec2 velocity = glm::zero<glm::vec2>();

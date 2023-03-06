@@ -12,9 +12,9 @@
 #include <particle.hpp>
 #include <physics_system.hpp>
 #include <random>
-
 namespace rocket {
 	static std::default_random_engine generator;
+	static float CIRCLE_RADIUS = 0.03f;
 	TutorialApp::TutorialApp()
 	{
 		loadGameObjects();
@@ -39,7 +39,7 @@ namespace rocket {
 
 			// 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
 			{
-				static int i = 0;
+				static int i = 20;
 				static int particleCounter = 0;
 
 				ImGui::Begin("Fps and slider!");                          // Create a window called "Hello, world!" and append into it.
@@ -48,6 +48,12 @@ namespace rocket {
 				ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 
 				ImGui::SliderInt("Number of particles to add", &i,0, 100);            // Edit 1 float using a slider from 0.0f to 1.0f
+
+				if (ImGui::SliderFloat("Particle radius", &CIRCLE_RADIUS, 0.0f, 0.1f)) {
+					std::cout << "SLIDER MOVED" << std::endl;
+					loadGameObjects();
+				}
+					// Edit 1 float using a slider from 0.0f to 1.0f
 
 				if (ImGui::Button("Clear Simulation")) {
 					clearSimulation();
@@ -75,7 +81,15 @@ namespace rocket {
 
 				ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 				ImGui::Text("Mouse position is %.3f x, %0.3f y", mouseX, mouseY);
-				//ImGui::Text("Test particle position is %.3f x, %0.3f y", gameObjects[testBallPosition].transform2d.translation.x, gameObjects[testBallPosition].transform2d.translation.y);
+				uint32_t selectedParticle = getSelectedParticle(mouseX, mouseY);
+				if (selectedParticle != -1) {
+					ImGui::Text("[Hover Particle Info] velocity (%.3f, %.3f) acceleration(% .3f, % .3f)",
+						gameObjects[getParticleIndex(selectedParticle)].velocity.x,
+						gameObjects[getParticleIndex(selectedParticle)].velocity.y,
+						gameObjects[getParticleIndex(selectedParticle)].acceleration.x,
+						gameObjects[getParticleIndex(selectedParticle)].acceleration.y
+					);
+				}
 
 
 				ImGui::End();
@@ -109,7 +123,7 @@ namespace rocket {
 	void TutorialApp::loadGameObjects()
 	{
 
-		auto verticies = Particle::createParticleVerticies(0.01f, {0.0f, 0.0f});
+		auto verticies = Particle::createParticleVerticies(CIRCLE_RADIUS, {0.0f, 0.0f});
 		circleModel = std::make_shared<RocketModel>(rocketDevice, verticies);
 		
 	}
@@ -118,19 +132,20 @@ namespace rocket {
 	{
 
 		std::uniform_real_distribution<double> distribution(-0.1, 0.1);
+		std::uniform_real_distribution<double> colorDistribution(0, 1);
 		RocketGameObject gameObject = RocketGameObject::createGameObject();
 		gameObject.model = circleModel;
-		gameObject.color = { 40, 40, 40 };
+		gameObject.color = { colorDistribution(generator), colorDistribution(generator), colorDistribution(generator) };
 		gameObject.mass = 1.0f;
 		gameObject.gravityApplied = true;
 		gameObject.collisionApplied = true;
 		gameObject.type = RocketGameObjectType::PARTICLE;
-		gameObject.radius = 0.01f;
+		gameObject.radius = CIRCLE_RADIUS;
 		gameObject.acceleration = { 0.0f, 3.f };
 		gameObject.transform2d.translation = {position.x + distribution(generator), position.y +distribution(generator)};
 
 		//gameObject.velocity = { distribution(generator),  distribution(generator) };
-		gameObject.velocity = { 0.0f, 0.0f };
+		gameObject.velocity = { 0.0f, 0.5f };
 		gameObjects.push_back(std::move(gameObject));
 		//return std::make_unique<RocketGameObject>(gameObjects.back());
 		return gameObjects.size() - 1;
