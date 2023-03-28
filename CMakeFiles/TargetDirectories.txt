@@ -1,0 +1,4 @@
+/home/mario/c++/repos/Rocket/CMakeFiles/imgui.dir
+/home/mario/c++/repos/Rocket/CMakeFiles/rocket.dir
+/home/mario/c++/repos/Rocket/CMakeFiles/edit_cache.dir
+/home/mario/c++/repos/Rocket/CMakeFiles/rebuild_cache.dir
