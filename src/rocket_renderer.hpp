@@ -8,7 +8,7 @@
 #include <cassert>
 #include "rocket_model.hpp"
 
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 

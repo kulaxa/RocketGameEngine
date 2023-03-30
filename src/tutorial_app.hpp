@@ -9,7 +9,7 @@
 #include "rocket_game_object.hpp"
 
 #include "physics_system.hpp"
-#include "imgui/imgui.h"
+#include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_vulkan.h"
 

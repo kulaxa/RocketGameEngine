@@ -26,7 +26,7 @@ target_include_directories(imgui PUBLIC ./imgui ./imgui/backend)
 include_directories(${VULKAN_INCLUDE_DIR} ${GLFW_INCLUDE_DIR})
 
 #file(GLOB SOURCES "*.cpp" "*.hpp" "./imgui/*.cpp" "./imgui/*.h" "./imgui/backend/*.cpp" "./imgui/backend/*.h")
-file(GLOB SOURCES "*.cpp" "*.hpp")
+file(GLOB SOURCES "src/*.cpp" "src/*.hpp")
 
 # Link against Vulkan and GLFW
 target_link_libraries(imgui PUBLIC ${Vulkan_LIBRARIES} glfw vulkan)
@@ -42,3 +42,4 @@ target_link_libraries(rocket ${Vulkan_LIBRARIES} vulkan glfw imgui)
 
 # Set compiler flags
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic")
+set(CMAKE_BUILD_TYPE Debug)
